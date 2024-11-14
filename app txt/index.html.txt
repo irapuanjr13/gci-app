@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de BMP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Consulta de BMP</h1>
+        </header>
+
+        <section>
+            <h2>Buscar por Número de BMP</h2>
+            <form method="POST" action="/">
+                <input type="text" name="bmp_query" placeholder="Digite o número do BMP" required>
+                <button type="submit">Buscar</button>
+            </form>
+
+            {% if results %}
+                <div class="cards">
+                    {% for result in results %}
+                        <div class="card">
+                            <h3>Número BMP: {{ result['Nº BMP'] }}</h3>
+                            <p><strong>Nomeclatura:</strong> {{ result['NOMECLATURA/COMPONENTE'] }}</p>
+                            <p><strong>Número de Série:</strong> {{ result['Nº SERIE'] }}</p>
+                            <p><strong>Valor Atualizado:</strong> R$ {{ "{:,.2f}".format(result['VL. ATUALIZ.']) }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>Nenhum resultado encontrado.</p>
+            {% endif %}
+        </section>
+    </div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Patrimônio</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <header>
+        <h1>Sistema de Gestão de Patrimônio</h1>
+    </header>
+
+    <div class="button-container">
+        <button onclick="document.getElementById('consulta-section').style.display='block'; document.getElementById('guia-section').style.display='none'">Consulta de BMP</button>
+        <button onclick="document.getElementById('guia-section').style.display='block'; document.getElementById('consulta-section').style.display='none'">Guia de Circulação Interna</button>
+    </div>
+
+    <!-- Seção de Consulta -->
+    <div id="consulta-section" style="display:none;">
+        <form method="post">
+            <input type="text" name="search" placeholder="Digite o BMP para consulta...">
+            <button type="submit" name="search_button">Consultar</button>
+        </form>
+        <div class="results">
+            {% for result in results %}
+                <div class="card">
+                    <h3>BMP: {{ result['Nº BMP'] }}</h3>
+                    <p>Nomenclatura: {{ result['NOMECLATURA/COMPONENTE'] }}</p>
+                    <p>Série: {{ result['Nº SERIE'] }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Seção de Guia de Circulação Interna -->
+    <div id="guia-section" style="display:none;">
+        <form method="post">
+            <input type="text" name="bmp_numbers" placeholder="Digite os BMPs, separados por vírgula...">
+            <input type="text" name="secao_origem" placeholder="Seção de Origem">
+            <input type="text" name="secao_destino" placeholder="Seção de Destino">
+            <input type="text" name="chefia_origem" placeholder="Chefia de Origem">
+            <input type="text" name="chefia_destino" placeholder="Chefia de Destino">
+            <button type="submit" name="generate_pdf">Gerar PDF</button>
+        </form>
+        {% if generated_pdf %}
+            <a href="{{ url_for('download_pdf') }}">Baixar PDF Gerado</a>
+        {% endif %}
+    </div>
+</body>
+</html>

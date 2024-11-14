@@ -1,0 +1,70 @@
+from flask import Flask, render_template, request, send_file
+import pandas as pd
+from fpdf import FPDF
+import datetime
+
+app = Flask(__name__)
+
+# Carregar a planilha de patrimônio
+df = pd.read_excel("patrimonio.xlsx")
+
+# Função para buscar dados dos BMPs
+def buscar_dados_bmps(bmps):
+    bmps = [str(bmp).strip() for bmp in bmps]  # Remove espaços e converte para string
+    dados_bmps = df[df['Nº BMP'].astype(str).isin(bmps)]  # Filtra usando a coluna "Nº BMP"
+    return dados_bmps if not dados_bmps.empty else None
+
+# Função para gerar o PDF com os dados dos BMPs
+def gerar_pdf(dados_bmps, secao_origem, secao_destino, chefia_origem, chefia_destino):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 12)
+
+    # Título e informações principais
+    pdf.cell(0, 10, "Relatório de Transferência de Patrimônio", 0, 1, "C")
+    pdf.cell(0, 10, f"Seção de Origem: {secao_origem}", 0, 1)
+    pdf.cell(0, 10, f"Chefia de Origem: {chefia_origem}", 0, 1)
+    pdf.cell(0, 10, f"Seção de Destino: {secao_destino}", 0, 1)
+    pdf.cell(0, 10, f"Chefia de Destino: {chefia_destino}", 0, 1)
+    pdf.cell(0, 10, f"Data: {datetime.datetime.now().strftime('%dd/%mm/%YYYY')}", 0, 1)
+
+    # Dados dos BMPs
+    pdf.cell(0, 10, "", 0, 1)
+    pdf.set_font("Arial", "", 10)
+    for _, row in dados_bmps.iterrows():
+        pdf.cell(0, 10, f"BMP: {row['Nº BMP']} - Nomenclatura: {row['NOMECLATURA/COMPONENTE']} - Nº de Série: {row['Nº SERIE']} - Valor Atualizado: {row['VL. ATUALIZ.']}", 0, 1)
+
+    # Salvar o PDF
+    pdf_path = "relatorio_bmp.pdf"
+    pdf.output(pdf_path)
+    return pdf_path
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    results = pd.DataFrame()
+    generated_pdf = None
+
+    if request.method == "POST":
+        if 'search' in request.form:
+            search_query = request.form.get("search").lower()
+            results = df[df.apply(lambda row: search_query in row.astype(str).str.lower().to_string(), axis=1)]
+        
+        elif 'generate_pdf' in request.form:
+            bmp_numbers = request.form.get("bmp_numbers").split(",")
+            secao_origem = request.form.get("secao_origem")
+            secao_destino = request.form.get("secao_destino")
+            chefia_origem = request.form.get("chefia_origem")
+            chefia_destino = request.form.get("chefia_destino")
+
+            dados_bmps = buscar_dados_bmps(bmp_numbers)
+            if dados_bmps is not None:
+                generated_pdf = gerar_pdf(dados_bmps, secao_origem, secao_destino, chefia_origem, chefia_destino)
+
+    return render_template("index.html", results=results, generated_pdf=generated_pdf)
+
+@app.route("/download_pdf")
+def download_pdf():
+    return send_file("relatorio_bmp.pdf", as_attachment=True)
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5000)
